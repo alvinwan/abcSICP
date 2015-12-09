@@ -54,7 +54,6 @@
 (define (combiner stream1 stream2 f)
   (cons-stream (f (car stream1) (car (cdr-stream stream2)))
     (combiner (cdr-stream stream1) (cdr-stream (cdr-stream stream2)) f)))
-)
 
 
 ;;;
