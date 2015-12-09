@@ -1,4 +1,4 @@
-# [A Brief Compendium: Structure and Interpretation of Computer Programs](http://alvinwan.com/cs61a)
+# [A Brief Compendium: Structure and Interpretation of Computer Programs](http://alvinwan.com/publications/abcSICP.pdf)
 
 by uGSI [Alvin Wan](http://alvinwan.com), supplement to Professor John DeNero's [Composing Programs](http://composingprograms.com) textbook
 
