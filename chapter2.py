@@ -68,12 +68,37 @@ def permutations(lst):
     >>> permutations([1, 2, 3])
     [[1, 2, 3], [1, 3, 2], [2, 1, 3], [2, 3, 1], [3, 1, 2], [3, 2, 1]]
     """
+    results = [[]]
+    while lst:
+        results += [q + [lst[0]] for q in results]
+        lst.pop(0)
+    return sorted(results,key=len) # To appear in a visually appealing order
+
     if len(lst) <= 1:
         return [lst]
     total = []
     for i, k in enumerate(lst):
         total.extend([[k] + p for p in permutations(lst[:i] + lst[i+1:])])
     return total
+
+
+# Problem Variant
+# ---------------
+# Find all subsets instead of permutations of a list.
+# provided by Dibya Jyoti Ghosh
+def all_subsets(lst):
+    """
+    Iteratively finds all possible subsets of a list
+    (including the trivial and null subsets)
+
+    >>> all_subsets([1,2,3])
+    [[], [1], [2], [3], [1, 2], [1, 3], [2, 3], [1, 2, 3]]
+    """
+    results = [[]]
+    while lst:
+        results += [q + [lst[0]] for q in results]
+        lst.pop(0)
+    return sorted(results,key=len) # To appear in a visually appealing order
 
 
 def min_pie(pie):
