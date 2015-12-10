@@ -68,12 +68,6 @@ def permutations(lst):
     >>> permutations([1, 2, 3])
     [[1, 2, 3], [1, 3, 2], [2, 1, 3], [2, 3, 1], [3, 1, 2], [3, 2, 1]]
     """
-    results = [[]]
-    while lst:
-        results += [q + [lst[0]] for q in results]
-        lst.pop(0)
-    return sorted(results,key=len) # To appear in a visually appealing order
-
     if len(lst) <= 1:
         return [lst]
     total = []
