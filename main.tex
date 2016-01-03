@@ -1,0 +1,633 @@
+\documentclass[a4paper]{book}
+
+% packages %
+\usepackage[english]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{fancyhdr,listings,color}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+% universal page styles %
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{aaalv.in/abcSICP}
+\lhead{Structure and Interpretation of Computer Programs}
+\rfoot{Page \thepage}
+
+% subtitle formatting %
+\usepackage{titling}
+\newcommand{\subtitle}[1]{
+  \posttitle{
+    \par\end{center}
+    \begin{center}\large#1\end{center}
+    \vskip0.5em}
+}
+
+% code formatting %
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+
+\lstset{frame=none,
+  language=Python,
+  aboveskip=5mm,
+  belowskip=5mm,
+  showstringspaces=false,
+  columns=flexible,
+  basicstyle={\small\ttfamily},
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  keywordstyle=\color{MidnightBlue},
+  commentstyle=\color{OliveGreen},
+  stringstyle=\color{BurntOrange},
+  breaklines=true,
+  breakatwhitespace=true,
+  tabsize=3
+}
+
+\begin{document}
+
+\begin{titlepage}
+\title{
+	{\Large \textbf{A Brief Compendium}} \\
+    \vspace{3mm}
+    {\Huge \textbf{Structure and Interpretation of Computer Programs}}
+}
+\subtitle{at the University of California, Berkeley}
+\author{Alvin Wan}
+\date{}
+\maketitle
+\end{titlepage}
+
+\tableofcontents
+
+\vfill
+
+\pagebreak \newpage
+
+\section{Purpose}
+
+This compendium is (unofficially) written for the Fall 2015 CS61A: Structure and Interpretation of Computer Programs class taught by Professor John DeNero at UC Berkeley. It's primary purpose is to offer additional practice problems and walkthroughs, as a supplement to Professor DeNero's textbook Composing Programs (composingprograms.com).
+
+\subsection{Structure}
+
+Each chapter is structured so that this book can be read on its own (with sufficient Python knowledge). A minimal guide at the beginning of each section covers essential materials and misconceptions but does not provide a comprehensive overview. Each guide is then followed by at least 5 practice problems, first provided as just problem statements, then provided as templates, as they are on CS61A exams. 
+
+\subsection{Breakdown}
+
+For the most part, guides are simply summaries of select chapters from Composing Programs.
+
+For more difficult parts of the course, guides may be accompanied by breakdowns and analyses of problem types that were otherwise not introduced in the course. These additional "Analysis" sections will attempt to provide a more regimented approach to solving complex problems.
+
+Except for the first problem of each section, problems are written at about exam-level, err'ing on the side of difficulty where needed. All problems have have accompanying, working scripts at {\tt github.com/alvinwan/abcSICP} and have been tested using UniExpect, a doctest-esque module for testing in languages like Scheme and SQL ({\tt github.com/alvinwan/UniExpect}).
+
+\subsection{Resources}
+
+Additional resources, including 3 practice exams, 10 quizzes, and other random worksheets and problems are posted online at {\tt alvinwan.com/cs61a}.
+
+\chapter{Higher-Order Functions}
+
+\section{Guide}
+
+Higher-order functions manifest themselves in three ways: functions  as arguments, nested definitions, and functions as return values.
+\\
+\\
+\textit{For this guide's original, full text, see Composing Programs 1.6.}
+
+\subsection{Functions as Arguments}
+
+Using functions as arguments allows us to abstract functionality. In the following example, an {\tt evaluator} accepts the function representation of a polynomial, and evaluates that polynomial for each x in a list.
+\begin{lstlisting}
+def evaluator(polynomial, xs=(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)):
+  """Evaluates a polynomial at all xs"""
+  return [(x, polynomial(x)) for x in xs]
+\end{lstlisting}
+This allows us to grab the coordinates of any polynomial written as a function of x.
+\begin{lstlisting}
+y1 = lambda x: 0.5*x + 3  # line
+y2 = lambda x: (x - 3)**2 + 1  # parabola
+y3 = lambda x: x**4 + 2*x**2 - 3  # random polynomial
+\end{lstlisting}
+We now have a simple way of evaluating any polynomial at an arbitrary $n$ points, where {\tt n=len(xs)}.
+
+\subsection{Nested Definitions}
+
+Functions defined within functions allow us to abstract away a function's inner workings, hiding it from the global frame. In the next chapter, we will see that nested definitions additionally allow us to take advantage of recursion without sacrificing code cleanliness (i.e., defining too many functions in the global frame).
+
+\pagebreak
+
+The following is a naïve implementation of selection sort.
+
+\begin{lstlisting}
+def selection_sort(lst):
+  """Sorts a list of comparables in-place."""
+  
+  def min_index(lst, start):
+    """Returns index of minimum value after the index 'start'."""
+    assert 0 <= start < len(lst), 'Invalid index'
+    j, biggest, k = start, lst[start], start
+    while k < len(lst):
+      if lst[k] > biggest:
+        j, biggest = k, lst[k]
+      k += 1
+    return k
+    
+  for i, n in enumerate(lst):
+    j = min_index(lst, i)
+    lst[i], lst[j] = lst[j], lst[i]
+\end{lstlisting}
+
+By defining {\tt min\_index} inside of {\tt selection\_sort}, we avoid globally defining a function that is specific to {\tt selection\_sort}. More importantly, by working in a smaller namespace (within the scope of {\tt selection\_sort}), we lessen the risk of overriding an existing function with different functionality.  
+
+\subsection{Functions as Return Values}
+
+Functions as return values allow us to generate highly similar and marginally different functions. Take all fifth-degree polynomials, for example. Each naturally follows the same construct $ax^5 + bx^4 + cx^3 + dx^2 + ex + f$. Programming a series of lambda functions that each take nearly-identical forms would be tedious. 
+\begin{lstlisting}
+y1 = lambda x: 5*x**5 + 52*x**4 + 7*x**3 + 2*x**2 + 3*x + 7
+y2 = lambda x: 10*x**5 + 7*x**4 + 3*x**3 + 11*x**2 + 2*x + 3
+y3 = lambda x: 3*x**5 + 6*x**4 + 22*x**3 + 2*x**2 + 41*x + 2
+...
+\end{lstlisting}
+Instead, we can define a {\tt deg5\_generator}, which takes 6 arguments: 1 for each coefficient and 1 additional for the extra constant.
+
+\begin{lstlisting}
+def deg5poly(a, b, c, d, e, f):
+  """Returns a polynomial as a function with one parameter x."""
+  return lambda x: a*x**5 + b*x**4 + c*x**3 + d*x**2 + e*x + f
+\end{lstlisting}
+Now, we can shorten our polynomial definitions.
+\begin{lstlisting}
+y1 = deg5poly(5, 52, 7, 2, 3, 7)
+y2 = deg5poly(10, 7, 3, 11, 2, 3)
+y3 = deg5poly(3, 6, 22, 2, 41, 2)
+...
+\end{lstlisting} 
+
+\section{Problems}
+
+\begin{enumerate}
+	\item \textbf{Warm up} Without using for, while, or slicing, reverse a list. You should use the built-in {\tt map} function.
+    \item Replace each digit in a number with its distance -- in digits -- from the first 1 to come \textbf{after} it. Any number that does not have a 1 after it will be replaced by a 0, and two digits side-by-side have a distance of 1. Assume there is no distance greater than 9.
+    \item Write a function {\tt next\_look\_and\_say(n)} which returns the next number of the "look-and-say" sequence given the previous term {\tt n}. The first term is 1. To generate a term in the sequence, look at the previous term and read it. 1121 is "two 1s one 2 one 1", which translates into 211211.
+    \item Crypto is a puzzle game, where players receive a total and a series of numbers. Assume we can only use multiply, divide, add, and subtract, and that order of operations doesn't apply ('4+4/2'=4). Write {\tt crypto\_solver}, which finds all possible permutations of mathematical operations that will yield the total. For example, given {\tt nums=[6, 2, 2]}, {\tt total=10}, return {\tt {'6+2+2', '6*2-2'}}. Order of the results does not matter.
+    \item Write a function that replaces each element of a list with the sum of the two largest numbers after it. Use -1 if there are not enough numbers.
+    \item Write a function {\tt matrix\_product} that multiplies two matrices {\tt A} and {\tt B} together. If matrix multiplication is impossible, raise an error. Recall that the number of columns in the first matrix must equal the number of rows in the second matrix.
+\end{enumerate}
+
+\chapter{Recursion}
+
+\section{Guide}
+
+Recursive functions are functions that invoke themselves, either indirectly or directly. Before writing any recursive function, ask yourself the following three questions:
+\begin{enumerate}
+\item What is the base case?
+\item How does the recursive call break down the problem into simpler parts?
+\item What is the recursive case?
+\end{enumerate}
+\textit{For this guide's original, full text, see Composing Programs 1.7.}
+
+\subsection{Mutual Recursion}
+Mutual recursion occurs when two functions recursively call each other. This can be useful for maintaining abstraction barriers inside of a program.
+
+Consider a program that, given the amount of time in a class period, prints the interaction between a teacher and a student, up until the bell.
+\begin{lstlisting}
+def ask(t):
+  """Student takes 3 seconds to ask a question."""
+  if t <= 0:
+  	print('Ask me after class!')
+  print('Asking...')
+  answer(t-3)
+
+def answer(t):
+  """Teacher takes 20 seconds to answer."""
+  if t <= 0:
+    print('Stay after for a full explanation!')
+  print('Answering...')
+  ask(t-20)
+\end{lstlisting}
+Notice that these function abstract away the notion of asking from the notion of answering. 
+\subsection{Tree Recursion}
+Tree recursion occurs when a function calls itself more than once. This results in a "tree" of function calls, where each function call branches into a few more. We can benefit from this type recursion most when finding permutations or combinations.
+
+Consider a staircase with {\tt n} steps. We can choose to take 1 or 2 steps at a time. How many ways can we walk these stairs?
+\begin{lstlisting}
+def stairs(n):
+  """Number of ways to walk n steps, if you can choose to take 1 or 2 
+  steps at a time"""
+  if n <= 2:
+    return n
+  return stairs(n-2) + stairs(n-1)
+\end{lstlisting}
+Let us break down this problem by answering the three questions we ask ourselves for any recursion problem.
+\begin{enumerate}
+\item \textbf{What is the base case?} We consider {\tt n=0}, {\tt n=1}, or {\tt n=2} steps. If {\tt n=0}, there are 0 ways we can walk the stairs. If {\tt n=1}, we can only walk it one way: take the step. If {\tt n=2}, we have two ways: take one step at a time, or take both at once. Combining all of these base cases, it just so happens that if {\tt n<=2}, we have exactly {\tt n} ways of walking these steps.
+\item \textbf{How does the recursive call break down the problem into simpler parts?} Let us consider {\tt n=3}. In this case, we know that our last move covers either 2 steps or 1. As a consequence, we know that all the ways to traverse 3 steps is all the ways to traverse 1 step and all the ways to traverse 2 steps ({\tt 3-2} and {\tt 3-1}, respectively). Our recursive case is the sum of all the ways to traverse {\tt 3-1} and {\tt 3-2} steps.
+\item \textbf{What is the recursive case?} This generalizes fairly well. For any {\tt n} steps, we sum all the ways to traverse {\tt n-2} and {\tt n-1} steps. As it turns out, we have a function that tells us how many ways to traverse {\tt n} steps: {\tt stairs}, the very function we're writing. So, our recursive call is {\tt stairs(n-1) + stairs(n-2)}.
+\end{enumerate}
+\subsection{Cascade}
+The cascade is a visualization of recursive calls. 
+\begin{lstlisting}
+def cascade(n, depth=0):
+  """Visualization for cascade"""
+  if n > 0:
+    print(' ' * depth, 'cascade({})'.format(n))
+    cascade(n-1, depth+1)
+    print(' ' * depth, 'return')
+\end{lstlisting}
+Running {\tt cascade(5)}, for example, will yield a cascade of depth 5. In the following Analysis section of chapter 3, we will discuss how to take advantage of this visualization.
+
+\section{Analysis}
+
+\subsection{How do I even start?}
+
+Recursion questions are generally and initially daunting. The question is: \textit{How do I even start?} First, answer the three questions specified in the introduction section of this chapter.
+
+\begin{enumerate}
+\item What is the base case?
+\item How does the recursive call break down the problem into simpler parts?
+\item What is the recursive case?
+\end{enumerate}
+
+If the recursive case is particularly complex, try additionally asking yourself the following questions. These questions do not cover all possibilities with recursion but may get you started in the right direction.
+
+\begin{enumerate}
+\item \textbf{What data does each recursive call need?}  Is the question asking for distance? The index of a particular value? Its depth? Determine what data each recursive call requires to complete its task. If the function is only responsible for changing values, think about what the function needs to compute that new value. 
+\item \textbf{Which leg of the cascade?} Think about which direction data is moving. This can be a particularly useful tool for visualizing recursion. See section 3.2.1 for more information about the cascade.
+\item \textbf{What type of recursion is this?} Is this mutual or tree recursion? Is it "standard" recursion? Determine if you can break one recursive call into smaller subsets of the same problem. Consider if you're dealing with all combinations or permutations of a sequence. If either is true, the problem could benefit from tree recursion. 
+\end{enumerate}
+
+Make sure to take time addressing some if not all of these questions, before coding. Using your responses to the above questions, you should have some idea of how the problem works. If not, try guessing and checking. Ultimately, writing and testing code is preferable to sitting and staring.
+
+\newpage \pagebreak
+
+\section{Problems}
+
+\begin{enumerate}
+\item \textbf{Warm up} Write {\tt stairs(n)}, which gives the number of ways to take {\tt n} steps, given that at each step, you can choose to take 1, 2, or 3 steps. {\tt stairs(5) = 13, stairs(10) = 274}
+\item Write {\tt stairs(n, k)}, which gives the number of ways to take {\tt n} steps, given that at each step, you can choose to take 1, 2, ... k-2, k-1 or k steps. {\tt kstairs(5, 2) = 8, stairs(5, 5) = 16, stairs(10, 5) = 464}
+\item Compute the determinant of a matrix {\tt A} using co-factor expansion. You may not assume a fixed size for the matrix; {\tt A} may be any n x n matrix where $n \in \mathbb{N}$ (i.e., where n is a natural number).
+\item Write a function {\tt permutations(lst)} that returns a list of all permutations of the provided {\tt lst}.
+\item Given a tuple of numbers, where each number represents the size of a slice of pie, distribute the slices among 2 people as evenly as possible. (i.e., minimizing the difference between the sums of two sets of values).
+\end{enumerate}
+
+\chapter{Data Structures}
+
+\section{Guide}
+
+This guide will only explore two data structures: Linked Lists and Trees. In here, we will use conventions from Composing Programs.
+\\
+\\
+\textit{For this guide's original, full text, see Composing Programs 2.9.}
+
+\subsection{Linked Lists}
+
+Linked lists are comprised of a value (called {\tt first}) and a {\tt rest} pointer. {\tt rest} will point to either {\tt Link.empty}, denoting the end of a linked list, or to the head of a linked list. Consider the following definition of a {\tt Link}.
+
+\begin{lstlisting}
+class Link:
+  """Linked list with a value (first) and a next pointer (rest)"""
+  empty = ()
+  def __init__(self, first, rest=empty):
+    self.first = first
+    self.rest = rest
+\end{lstlisting}
+
+List construction is also recursive. Consider the following piece of code that generates a linked list of the first 5 numbers in the naturals. Each link is passed into the constructor of the previous link as {\tt rest}: {\tt Link(1, Link(2, Link(3, Link(4, Link(5)))))}
+
+We can traverse this list either iteratively or recursively. The following is a commonly-used \textit{iterative} approach to linked list traversal.
+
+\begin{lstlisting}
+def print_list_iter(link):
+  while link.rest is not Link.empty:
+    print(link.first)
+    naturals = link.rest
+\end{lstlisting}
+
+The following is a commonly-used \textit{recursive} approach to linked list traversal.
+
+\begin{lstlisting}
+def print_list_rec(link):
+  if link is Link.empty:
+  	return
+  print(link.first)
+  return print_list_rec(link.rest)
+\end{lstlisting}
+
+\subsection{Trees}
+
+Trees are similarly comprised of a value (called {\tt entry}) and a list of {\tt branches}. {\tt branches} is either empty, denoting a \textit{leaf} (a tree without branches), or a list of trees. Consider the following definition of a {\tt Tree}.
+
+\begin{lstlisting}
+class Tree:
+  """Tree with a value (entry) and a list of subtrees (branches)"""
+  def __init__(self, entry, branches=()):
+    self.entry = entry
+    self.branches = branches
+\end{lstlisting}
+
+Just like list construction, tree construction is recursive. Consider the following piece of code that generates a tree containing the first 5 natural numbers: {\tt Tree(1, [Tree(2, [Tree(4), Tree(5)]), Tree(3)])}
+
+We can traverse this tree either iteratively or recursively. \textit{Note that the two iterative traversals and their associated data structures discussed below are outside the scope of CS61A.} The iterative approach may take one of two forms: \textit{depth-first traversal} or \textit{breadth-first traversal}. With depth-first traversal, use a \textit{stack}, which first removes the last item added to the stack. With breadth-first traversal, use a \textit{queue}, which first removes the first item added to the stack.
+
+\begin{lstlisting}
+def dfs(tree):
+  """Traverses a tree depth-first, using a stack."""
+  trees = [tree]
+  while trees:
+    tree = trees.pop()  # pop from the end
+    print(tree.entry)
+    trees.extend(tree.branches)  # tree.branches[::-1] to match dfs_rec
+
+def bfs(tree):
+  """Traverses a tree breadth-first, using a queue."""
+  trees = [tree]
+  while trees:
+    tree = trees.pop(0)  # pop from the beginning
+    print(tree.entry)
+    trees.extend(tree.branches)
+\end{lstlisting}
+
+The following is a commonly-used \textit{recursive} approach to tree traversal. Notice that the recursive approach shown here is a depth-first traversal.
+
+\begin{lstlisting}
+def dfs_rec(tree):
+  print(tree.entry)
+  return [dfs_rec(subtree) for subtree in tree.branches]
+\end{lstlisting}
+
+\pagebreak \newpage
+
+\section{Analysis}
+
+\subsection{Which leg of the cascade?}
+
+First, let us remind ourselves of the {\tt cascade} function from section 2.1.3. This function will generate the cascading effect.
+
+\begin{lstlisting}
+def cascade(n, depth=0):
+  """Visualization for cascade"""
+  if n > 0:
+    print(' ' * depth, 'cascade({})'.format(n))
+    cascade(n-1, depth+1)
+    print(' ' * depth, 'return')
+\end{lstlisting}
+
+Then, let us \textit{see} the cascade. This is the output of {\tt cascade} using {\tt cascade(3)}. Notice the sideways v-shape.
+
+\begin{lstlisting}
+ cascade(3)  # deeper
+  cascade(2)  # deeper
+   cascade(1)  # deepest!
+   return  # rising
+  return  # rising
+ return  # made it out!
+\end{lstlisting}
+
+You'll notice that on the \textit{descending leg}, each function call brings us deeper into the stack of frames. On the \textit{ascending leg}, each {\tt return} brings us one step higher, decreasing depth. These are not formal terms that describe the recursion process; it is simply jargon we can use to discuss this effect.
+
+In general, the descending leg is associated with progression deeper into a data structure, and the ascending leg is associated with the return back. For data structures that we've explored, this means the following:
+\begin{itemize}
+\item \textbf{Linked List} The \textit{descending leg} progresses along a linked list, in the forward direction. We could take advantage of this leg if we were, for example, counting the distance of a node from the head of the linked list. The \textit{ascending leg} progresses back left, in the reverse direction. We could take advantage of this leg if we were, for example, keeping track of the largest value \textit{after} a node.
+\item \textbf{Tree} The \textit{descending leg} progresses downward, deeper into the tree with each recursive call. We could use this leg if, for example, we were computing each node's depth. The \textit{ascending leg} progresses upwards, getting shallower with each return. We could use this leg if, for example, we were calculating the closest, descendant leaf to a given parent node.
+\end{itemize}
+To take advantage of the descending leg, add parameters to your helper function to pass data forwards, or modify your data structure \textit{before} the recursive call. To take advantage of the ascending leg, add return values to your helper function to pass data backwards, or modify your data structure \textit{after} the recursive call.
+
+\subsection{Patterns for Recursion}
+
+Linked list and tree traversals actually reduce the problem of recursion by answering one of three questions for us: How does the recursive call break down the problem into simpler parts? With only a few exceptions, we can generally assume the following is true about each data structure.
+
+\begin{enumerate}
+\item For \textbf{linked lists}, we break down a problem into the current link and the rest of the linked list. Each recursive call processes only the current link ({\tt first}) and \textit{reduces the linked list by a link at a time}. The link's {\tt rest} is left to the recursive call.
+\item For \textbf{trees}, we break down a problem into the current node and its subtrees. Each recursive call processes only the current link ({\tt entry}) and \textit{reduces the tree by a node at a time}. The tree's branches are left to the recursive call.
+\end{enumerate}
+
+Sometimes, our base case may also be straightforward. Given that we're traversing the data structure one node at a time and traversing only one level deeper each time, the base case is simply if we've reached the end the data structure.
+
+\begin{enumerate}
+\item For a \textbf{linked list}, our base case is {\tt if link is Link.empty}.
+\item For a \textbf{tree}, our base case is {\tt if not tree.branches}.
+\end{enumerate}
+
+There are other base cases we may need to consider, if we aren't progressing so simply through the data structure. For example, if we're traversing multiple nodes at once, we may need to add checks for {\tt None}. For example, if we're jumping three nodes at a time, we will need to check that {\tt node.next} and {\tt node.next.next} are not {\tt None}. If we do not add this check, attempting to access {\tt node.next.next.next} may error.
+
+\vfill
+
+\pagebreak \newpage
+
+\section{Problems}
+
+\subsection{Linked Lists}
+
+\begin{enumerate}
+\item \textbf{Warm up} Compute the dot product of two vectors {\tt u} and {\tt v}. If the two linked lists, have different length, raise an error.
+\item Write a function {\tt sum\_reverse(lst)}, which sets each node's value to be the sum of its value and that of all the nodes after it. For example, [1, 2, 3, 4, 5, 6] becomes [21, 20, 18, 15, 11, 6].
+\item Rotate a linked list to the left {\tt k} times. For example, {\tt rotate\_left([1, 2, 3, 4, 5], 2)} would give {\tt [3, 4, 5, 1, 2]}. Assume that {\tt k} is less than the length of the linked list.
+\item Write {\tt average(lst, k)}. To implement this: conceptually divide the linked list into groups of {\tt k} until there are no more or not enough nodes. Update each node to become the average of the group it's in. For k = 3, for example, {\tt [1, 2, 3, 4, 5]} becomes {\tt [2, 2, 2, 4.5, 4.5]}.
+\item Check if a linked list represents a palindrome. Each link in the linked list contains one character in the candidate palindrome. Recall that a palindrome is any word that is read the same forwards as it is backwards.
+\end{enumerate}
+
+\subsection{Trees}
+
+\begin{enumerate}
+\item \textbf{Warm up} Write {\tt map\_tree(f, t)}, which applies a function f to every other level of a tree {\tt t}. Apply {\tt f} to the root, and do not modify the original.
+\item \textbf Write {\tt filter\_tree}, which returns a new tree containing only nodes that pass the filter. To simplify the problem, assume that {\tt f} and {\tt t} are constructed such that the root of the provided {\tt t} always passes the filter {\tt f}. The branches of a deleted node will be pushed up a level.
+\item Write {\tt min\_leaf}, which creates a new tree, where each node's value is its distance to the closest child leaf.
+\item Write a function {\tt sum\_reverse\_tree(t)}, which sets each node's value to be the sum of its value and that of all its branches. Modify the original tree, in place.
+\item \textbf{Hard} Solve a maze, given a stringified maze, an optional start(default {\tt (1, 1)}), an optional end (default to the bottom right), and an optional function moves that returns all possible moves given an x, y (default up, down, right, left). Your solution does not need to be optimized, and return the original maze if no path exists.
+\end{enumerate}
+
+\chapter{Object-Oriented Programming}
+
+\section{Guide}
+
+Object-oriented programming is a paradigm for computer programming that allows us to abstract data from its use. More specifically, it allows us to model real-world objects. 
+\\
+\\
+\textit{For this guide's original, full text, see Composing Programs 2.5-2.7.}
+
+\subsection{Classes} 
+
+Classes are reusable and extensible templates. We use the following syntax to define a class:
+
+\begin{lstlisting}
+class <name>:
+  <body>
+\end{lstlisting}
+
+With this syntax in mind, consider the following example of a class, {\tt No2Pencil}. By convention, our class name is camel cased, meaning every word is capitalized.
+
+\begin{lstlisting}
+class No2Pencil:
+  """a brand new pencil"""
+  led_weight = 2  # class attribute
+  def __init__(self, length):
+    self.length = length  # instance attribute
+\end{lstlisting}
+
+We can now create {\tt instances} of this {\tt No2Pencil} class. Note the distinction between a \textit{class} (a template) and an \textit{instance} (an object made from that template). Whereas there is only one class for all {\tt No2Pencil}s, there are many {\tt No2Pencil} instances, namely {\tt pencil1} and {\tt pencil2} in the code below. 
+
+\begin{lstlisting}
+pencil1 = No2Pencil(5)
+pencil2 = No2Pencil(5)
+\end{lstlisting}
+
+\subsection{Attributes}
+
+Consider the definition of {\tt No2Pencil} on the last page. Each of these instances has \textit{instance attributes}, or properties that are specific to that instance. An example would include {\tt length}. We know that each pencil should have its own length, as using one pencil should not affect the length of another pencil. Just as instances have instance attributes, classes may have \textit{class attributes}. These are properties that all instances of a class would most likely share, such as {\tt led\_weight}. Since the {\tt No2Pencil} class is for all No. 2 pencils, it would make sense that {\tt No2Pencil} has a class attribute {\tt led\_weight = 2}.
+
+To set or get attributes, we use dot notation, for both classes and instances. To get an attribute, use {\tt <expression> . <name>}. To assign an attribute, use {\tt <expression> . <name> = <value>}.
+
+\begin{lstlisting}
+# set attribute
+No2Pencil.led_weight = 3
+pencil1.weight -= 1
+
+# get attribute
+print(No2Pencil.led_weight)  # 3
+print(pencil1.length)  # 4
+\end{lstlisting}
+Remember that all dot expressions are evaluated in the following three steps.
+
+\begin{enumerate}
+\item Evaluate the {\tt expression}, left of the dot.
+\item Look for an instance attribute {\tt name}. If found, return the associated value.
+\item Else, look for a class attribute {\tt name}. If found, return the associated value.
+\end{enumerate}
+
+\subsection{Inheritance}
+
+We can define a \textit{subclass}, by using the following syntax.
+
+\begin{lstlisting}
+class <Name>(<Parent>):
+   <body>
+\end{lstlisting}
+
+A subclass will inherit all class attributes and methods from the parent class, unless those attributes or methods are overridden in the subclass.
+
+\subsection{Nonlocal}
+
+\textit{An alternative to OOP to maintain state}, {\tt nonlocal} statements allow nested functions to re-assign variables in the parent function. Note that {\tt nonlocal} is only needed for assignment. For impure functions that perform in-place modifications, such as {\tt append} or {\tt remove}, {\tt nonlocal} is \textit{not} needed. Remember that {\tt nonlocal} and OOP are \textit{two different ways to maintain state}.
+
+\begin{lstlisting}
+def parent(n):
+  def child():
+    nonlocal n
+    n = 5
+\end{lstlisting}
+
+\section{Problems}
+
+\textit{All of the following questions pertain to {\tt nonlocal} statements. OOP is more so a paradigm to be comfortable with and less a type of programming tool to be tested.}
+
+\begin{enumerate}
+\item \textbf{Warm up} Write {\tt hailstone\_chicken(i)}, which returns a function {\tt hailstone(start)} that prints the hailstone sequence for a given {\tt start}. For every {\tt i}th number {\tt n} of the hailstone sequence, print a string with {\tt 'chicken'} repeated {\tt n} times \textit{instead} of {\tt n} itself. For a hailstone sequence, if the number is even, divide it by 2. If the number is odd, multiply by 3 and add 1. For {\tt h(8)} where {\tt h=hailstone\_chicken(3)}, print {\tt 8}, {\tt 4}, {\tt chickenchicken}, and {\tt 1}.
+\item Write {\tt fib\_range(x, y)}, which returns {\tt fib}. In turn, {\tt fib} returns the next number in a series of fibonacci numbers, starting from x and ending with y, excluding y. Raise a {\tt StopIteration} exception if there are no more numbers in the sequence. For example, if {\tt fib = fib\_range(2, 21)}, calling {\tt fib()} 5 times would return 2, 3, 5, 8, and 13. A 5th function call would raise a {\tt StopIteration} exception. Note that 21 is not included.
+\item Without using nonlocal, write {\tt create\_complex}, which returns a function {\tt complex(a=None, b=None)}, and initializes the complex number to 0. {\tt complex(a, b)} adds a complex number {\tt a + bi} to the complex number, and {\tt complex()} returns a stringified form of the complex.
+\item Write {\tt call\_depth()}, which returns two function {\tt f} and {\tt g}. {\tt g} returns the number of times ({\tt n}), that {\tt f} was called, multiplied by the maximum "depth" {\tt d} of a call expression. For {\tt g()}, d=1 and {\tt f} wasn't called so n=0. That makes d*n=0. For {\tt g(f(f()))},  d=3 and  n=2, so d*n=6. For {\tt g(f(f(), f(f())))}, d=4, n=4, so d*n=16. (Notice that {\tt f()} has d=1, so {\tt f(f(), f(f()))} is {\tt f(1, 2)} and thus, d=max(1, 2) + 1= 3.)
+\item Given a dictionary {\tt rules} mapping integers {\tt i} to strings {\tt s}, {\tt fizzbuzzes(rules)} returns a function {\tt fizzbuzz(sequence)} that prints the {\tt sequence} with a few modifications: apply all rules from the provided {\tt rules}, where each {\tt i}th term is replaced with the corresponding {\tt s}. Higher values of {\tt i} take precedence over lower values of {\tt i}.
+\end{enumerate}
+
+\chapter{Implicit Sequences}
+
+\section{Guide}
+
+Implicit sequences allow us to take advantage of lazy computation and model infinite sequences. In this guide, we will discuss the three implicit sequences covered in Composing Programs: iterators, generators, and streams. The first two are written in Python, and the last is writte in Scheme.
+\\
+\\
+\textit{For this guide's original, full text, see Composing Programs 4.2.}
+
+\subsection{Iterator}
+
+An \textit{iterator} allows us to sequentially access a series. In Python, iterators must implement a {\tt \_\_next\_\_} method, which returns the next element of a sequence when invoked. Below is a sample iterator that returns the hailstone sequence, given a start value {\tt n}.
+
+\begin{lstlisting}
+def HailstoneIter:
+  """Generates the hailstone sequence, starting from start."""
+  def __iter__(self, n):
+    self.n = n
+        
+  def __next__(self):
+    n = self.n
+    if n == 1:
+      raise StopIteration  # terminate iterator if reached end
+    self.n = 3*n+1 if n%2 else n//2
+    return n
+\end{lstlisting}
+
+To use an iterator, instantiate an iterator and use Python's built-in {\tt next(<iterator>)}.
+
+\begin{lstlisting}
+hailstone = HailstoneIter(4)
+next(hailstone)  # 4
+next(hailstone)  # 2
+next(hailstone)  # 1
+next(hailstone)  # StopIteration error
+\end{lstlisting}
+
+An \textit{iterable} is any object that can be iterated over. This means that a single iterable can have many associated \textit{iterators}, with each iterator representing an iteration through the iterable. Iterables must implement the {\tt \_\_iter\_\_(<iterator>)} method, which returns an iterable. A hailstone iterable would resemble the following.
+
+\begin{lstlisting}
+def HailstoneIter:
+  ...
+  def __iter__(self):
+    return self
+\end{lstlisting}
+
+To use an iterable, instantiate the iterable and use Python's built-in {\tt iter(<iterable>)}.
+
+\begin{lstlisting}
+hailstone = iter(Hailstone(4))  # hailstone becomes iterator
+next(hailstone)  # 4, just like iterator
+...
+\end{lstlisting}
+
+In the above code, {\tt \_\_iter\_\_} just returns {\tt self}, since {\tt HailstoneIter} is itself an iterator. Since {\tt for} loops act on {\tt iterables}, we can now use {\tt for} loops with custom classes.
+
+\begin{lstlisting}
+for n in Hailstone(4):
+  print(n)
+\end{lstlisting}
+
+\subsection{Generator}
+
+A generator is a special type of iterator, returned by a generator function. Using the {\tt yield} statement anywhere inside of a function will automatically make it a generator when called. {\tt yield} statements will put a function on pause, and return that value.
+
+\begin{lstlisting}
+def hailstone_gen(n):
+  while n != 1:
+    yield n
+    n = 3*n+1 if n%2 else n//2
+\end{lstlisting}
+
+\subsection{Stream}
+
+Scheme does not support iterators or generators. Instead, scheme uses streams, which can "only" represent infinite sequences. Write the stream definition as though you were constructing a normal list, then substitute {\tt cons} for {\tt cons-stream}. When accessing the stream, use {\tt cdr-stream} instead of {\tt cdr}. All other properties of the scheme list remain the same. The following is a stream of the positive, even numbers.
+
+\begin{lstlisting}
+(define (stream n)
+  (cons-stream n (+ n 2))
+(define pos_evens (stream 2))
+\end{lstlisting}
+
+\section{Problems}
+
+\subsection{Iterators and Generators}
+
+\begin{enumerate}
+\item \textbf{Warm up} Write an iterable that iterates over every other of another sequence (iterator or generator).
+\item Write {\tt alt\_sequences(seq1, seq2, seq3, order)}, which takes three sequences (generators or iterators) and a list indicating the order with which the sequences are interpolated. If {\tt order} is {\tt [1, 3, 2]}, {\tt seq1} is the naturals, {\tt seq2} is the naturals starting from 2, and {\tt seq3} is the naturals starting from 3, the first three elements of the {\tt alt\_sequences} generator would be 1, 3, 2.
+\item Write {\tt combine}, which takes two sequences (generators or iterators) and a combiner function {\tt f}. The ith term of the {\tt combine} generator is the ith terms of both seq0 and seq1 combined by function f. The length of {\tt combiner} should be the \textit{longer} of the two sequences. The shorter sequence is padded with 0s.
+\item Write a function {\tt kdeepgen(k, lst)} which takes an integer {\tt k} and a list of values to yield {\tt lst}. {\tt kdeepgen} returns a generator that has {\tt k} 'depth' and {\tt yield}s all elements of the provided {\tt lst}. We define the standard generator function, which requires only one {\tt for} loop to iterate over, to have depth 1. A generator with depth 2 would require two {\tt for} loops, with one nested inside the other. A generator with depth k would require k {\tt for} loops.
+\item Write a function {\tt flattens(gen)} that flattens a generator with 'depth', returning a generator with depth 1. See the previous question for an explanation of depth. You may use {\tt isinstance(types.GeneratorType)} to test if a variable is a generator. ({\tt import types} first)
+\end{enumerate}
+
+\subsection{Streams}
+
+\begin{enumerate}
+\item \textbf{Warm up} Write a stream that contains over every other term of another stream.
+\item For two streams {\tt stream1} and {\tt stream2}, combine the first term of {\tt stream1} with the second term of {\tt stream2} using a combiner function {\tt f}. Calling {\tt (combiner naturals naturals (lambda (x) (+ x x)))} should then give {\tt 3} (1+2), {\tt 6} (2+4), {\tt 9} (3+6) etc.
+\item Write {\tt alt\_sequences(stream1, stream2, stream3, order)}, which takes three streams and a list indicating the order with which the streams are interpolated. If {\tt order} is {\tt (1 3 2)}, {\tt stream1} is the naturals, {\tt stream2} is the naturals starting from 2, and {\tt stream3} is the naturals starting from 3, the first three elements of the {\tt alt-sequences} stream would be 1, 3, 2.
+\end{enumerate}
+
+\end{document}
